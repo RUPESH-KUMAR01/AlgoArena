@@ -139,15 +139,15 @@ const RoomPage = () => {
     <div className="container">
       {/* Toast Container for Notifications */}
       <ToastContainer
-        position="top-right" // Position of the toast notifications
-        autoClose={3000} // Auto close after 3 seconds
-        hideProgressBar={false} // Show progress bar
-        newestOnTop={true} // Newest notifications on top
-        closeOnClick // Close on click
-        rtl={false} // Right-to-left layout
-        pauseOnFocusLoss // Pause when window loses focus
-        draggable // Allow dragging
-        pauseOnHover // Pause on hover
+        position="top-right" 
+        autoClose={3000}
+        hideProgressBar={false} 
+        newestOnTop={true} 
+        closeOnClick 
+        rtl={false}
+        pauseOnFocusLoss 
+        draggable 
+        pauseOnHover 
       />
 
       <div className="navbar">
