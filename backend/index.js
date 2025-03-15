@@ -18,6 +18,7 @@ app.use("/api",FullRoute)
 
 const server = app.listen(3000,()=>{
     console.log("Server is running on port 3000")
+    console.log("Up and running")
 });
 
 setupSocket(server);
