@@ -7,6 +7,8 @@ import { python } from "@codemirror/lang-python";
 import { cpp } from "@codemirror/lang-cpp";
 import { java } from "@codemirror/lang-java";
 import { io } from "socket.io-client";
+import { ToastContainer, toast } from "react-toastify"; // Import toast and ToastContainer
+import "react-toastify/dist/ReactToastify.css"; // Import default styles for toast notifications
 
 const RoomPage = () => {
   const { roomId } = useParams();
@@ -18,6 +20,16 @@ const RoomPage = () => {
   const [language, setLanguage] = useState("javascript");
 
   const socketRef = useRef(null); // Create a reference to hold the socket instance
+
+  useEffect(() => {
+    // Display "Welcome to the room!" toast notification
+    toast.success(`Welcome to the room ${roomId}!`);
+  }, [roomId]);
+
+  useEffect(() => {
+    // Display toast notification when the language changes
+    toast.info(`Switched to ${language}!`);
+  }, [language]); // Trigger this effect whenever the language changes
 
   useEffect(() => {
     // If socketRef.current is null, create the socket connection
@@ -32,8 +44,7 @@ const RoomPage = () => {
       console.log(`You have connected to WS with id: ${socketRef.current.id}`);
     });
 
-    // on any change to code the server is going to broadcast this message
-
+    // On any change to code, the server broadcasts this message
     socketRef.current.on("update-code", (data) => {
       if (data.roomId == roomId) {
         setCode(data.code);
@@ -47,7 +58,7 @@ const RoomPage = () => {
         socketRef.current = null;
       }
     };
-  }, [socketRef]); // Empty dependency array to run only once
+  }, [roomId]);
 
   const handleLogout = () => {
     localStorage.removeItem("username");
@@ -98,6 +109,7 @@ const RoomPage = () => {
         setRunResult("Error executing code");
       });
   };
+
   const getLanguageExtension = (lang) => {
     switch (lang) {
       case "python":
@@ -110,12 +122,13 @@ const RoomPage = () => {
         return javascript();
     }
   };
+
   const clearOutput = () => {
     setRunResult(""); // Fix missing clear functionality
   };
+
   const handleCodeChange = (value) => {
     setCode(value); // Update the state with the new value
-    //console.log(code)
     socketRef.current.emit("code-update", {
       roomId: roomId,
       code: value,
@@ -124,6 +137,19 @@ const RoomPage = () => {
 
   return (
     <div className="container">
+      {/* Toast Container for Notifications */}
+      <ToastContainer
+        position="top-right" // Position of the toast notifications
+        autoClose={3000} // Auto close after 3 seconds
+        hideProgressBar={false} // Show progress bar
+        newestOnTop={true} // Newest notifications on top
+        closeOnClick // Close on click
+        rtl={false} // Right-to-left layout
+        pauseOnFocusLoss // Pause when window loses focus
+        draggable // Allow dragging
+        pauseOnHover // Pause on hover
+      />
+
       <div className="navbar">
         <div className="navLeft">
           <h1 className="title">Algo Arena</h1>

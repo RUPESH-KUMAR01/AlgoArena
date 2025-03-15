@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const SignupPage = () => {
   const [username, setUsername] = useState("");
@@ -11,21 +13,72 @@ const SignupPage = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
 
+    // Validate all fields are filled
+    if (!username || !email || !password) {
+      toast.error("All fields are required!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     try {
       const response = await axios.post("/api/auth/signup", {
         username,
         email,
         password,
       });
-      alert(response.data.message);
+
+      console.log("Signup response:", response.data); // Debugging
+
+      // Successful signup
       if (response.data.username) {
+        toast.success(`Welcome to AlgoArena, ${response.data.username}!`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+
+        // Save user details to localStorage
         localStorage.setItem("username", response.data.username);
-        localStorage.setItem("token",response.data.token)
+        localStorage.setItem("token", response.data.token);
+
+        // Redirect to the next page
+        navigate("/create-join");
       }
-      navigate("/create-join"); // Redirect to login page after signup
     } catch (error) {
       console.error("Signup error:", error);
-      alert("Signup failed. Email might already be in use.");
+
+      let errorMessage = "Signup failed. Please try again later.";
+
+      if (error.response) {
+        console.log("Error response:", error.response.data); // Debugging
+
+        if (typeof error.response.data === "string") {
+          errorMessage = error.response.data; // Handle string responses
+        } else if (typeof error.response.data === "object") {
+          errorMessage = error.response.data.message || errorMessage; // Handle object responses
+        }
+
+        // Handle specific error cases
+        if (errorMessage.toLowerCase().includes("user already exists")) {
+          toast.error("Username or email already taken!", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        } else {
+          // Generic error message
+          toast.error(errorMessage, {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
+      } else {
+        // Fallback for network errors or unexpected issues
+        toast.error(errorMessage, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     }
   };
 
@@ -62,16 +115,18 @@ const SignupPage = () => {
         </button>
       </form>
       <div className="absolute right-10 top-5 w-[10%]">
-        <button style={styles.button} onClick={() => {
-          navigate('/login')
-        }}>
+        <button style={styles.button} onClick={() => navigate('/login')}>
           Login
         </button>
       </div>
+
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 };
 
+// Styles
 const styles = {
   container: {
     display: "flex",
@@ -80,7 +135,7 @@ const styles = {
     justifyContent: "center",
     height: "100vh",
     width: "100vw",
-    backgroundColor: "#121212", // Dark background
+    backgroundColor: "#121212",
     color: "#fff",
     fontFamily: "Arial, sans-serif",
     padding: "20px",
@@ -90,7 +145,7 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1e1e1e", // Darker container for form
+    backgroundColor: "#1e1e1e",
     padding: "30px",
     borderRadius: "10px",
     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.7)",

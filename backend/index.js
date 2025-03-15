@@ -7,7 +7,7 @@ const { default: setupSocket } = require('./socket');
 const app=express()
 
 app.use(cors({
-    origin: "http://localhost:5173",  // Change this to your frontend's actual URL
+    origin: "http://localhost:5174",  // Change this to your frontend's actual URL
     credentials: true, // Allow cookies & auth headers
     allowedHeaders: ["Authorization", "Content-Type"]
   }));

@@ -1,5 +1,11 @@
 {
   "dependencies": {
-    "@socket.io/admin-ui": "^0.5.1"
+    "@socket.io/admin-ui": "^0.5.1",
+    "axios": "^1.8.3",
+    "io": "^1.5.3",
+    "react-toastify": "^11.0.5",
+    "socket": "^0.14.57",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
   }
 }

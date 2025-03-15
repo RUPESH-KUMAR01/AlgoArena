@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -12,19 +14,58 @@ const LoginPage = () => {
 
     try {
       const response = await axios.post("/api/auth/signin", { email, password });
-      localStorage.setItem("token",response.data.token)
-      if (response.data.username) {
-        localStorage.setItem("username", response.data.username); // Store username
 
-        console.log(response.data.token)
+      // Save token and username to localStorage
+      localStorage.setItem("token", response.data.token);
+      if (response.data.username) {
+        localStorage.setItem("username", response.data.username);
+
+        console.log(response.data.token);
         navigate("/create-join"); // Navigate to create-join page
-      } else {
-        console.warn("Username not found in API response");
-        alert("Login successful, but username is missing.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert("Invalid email or password");
+
+      if (error.response) {
+        console.log("Error response data:", error.response.data);
+        console.log("Error response status:", error.response.status);
+
+        // Extract error message(s)
+        let errorMessage = "Login failed. Please try again later.";
+
+        if (typeof error.response.data === "string") {
+          // Handle string responses
+          errorMessage = error.response.data;
+        } else if (typeof error.response.data === "object") {
+          // Handle object responses
+          errorMessage = error.response.data.message || errorMessage;
+        }
+
+        // Handle specific error cases
+        if (errorMessage.toLowerCase().includes("user not found")) {
+          toast.error("New user? Sign up first!", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        } else if (errorMessage.toLowerCase().includes("invalid password")) {
+          toast.error("Invalid password", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        } else {
+          // Generic error message
+          toast.error(errorMessage, {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
+      } else {
+        // Fallback for network errors or unexpected issues
+        toast.error("Login failed. Please try again later.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     }
   };
 
@@ -52,17 +93,26 @@ const LoginPage = () => {
           Login
         </button>
       </form>
+
+      {/* Signup Button */}
       <div className="absolute top-5 right-10 w-[10%]">
-      <button style={styles.button} onClick={() => {
-        navigate('/signup') 
-      }}>
+        <button
+          style={styles.button}
+          onClick={() => {
+            navigate("/signup");
+          }}
+        >
           SignUp
         </button>
       </div>
+
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 };
 
+// Styles
 const styles = {
   container: {
     display: "flex",

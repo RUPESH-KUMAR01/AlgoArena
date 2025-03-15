@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createRoom, joinRoom } from "../api/roomService";
 import "../App.css";
+import { ToastContainer, toast } from "react-toastify"; // Import toast and ToastContainer
+import "react-toastify/dist/ReactToastify.css"; // Import default styles for toast notifications
 
 const CreateJoinPage = () => {
   const navigate = useNavigate();
@@ -22,9 +24,10 @@ const CreateJoinPage = () => {
       localStorage.setItem("previousRooms", JSON.stringify(updatedRooms));
       setPreviousRooms(updatedRooms);
       navigate(`/room/${roomId}`);
+      toast.success("New room created successfully!"); // Success toast
     } catch (error) {
       console.error("Error creating room:", error);
-      alert("Failed to create room. Please try again.");
+      toast.error("Failed to create the room. Please try again."); // Error toast
     }
   };
 
@@ -39,18 +42,31 @@ const CreateJoinPage = () => {
       navigate(`/room/${roomIdInput}`);
     } catch (error) {
       console.error("Error joining room:", error);
-      alert("Room not found. Please check the room ID.");
+      toast.error("Room not found. Please check the room ID."); // Error toast
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("username");
-    localStorage.removeItem("token")
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
   return (
     <div className="container">
+      {/* Toast Container for Notifications */}
+      <ToastContainer
+        position="top-right" // Position of the toast notifications
+        autoClose={3000} // Auto close after 3 seconds
+        hideProgressBar={false} // Show progress bar
+        newestOnTop={true} // Newest notifications on top
+        closeOnClick // Close on click
+        rtl={false} // Right-to-left layout
+        pauseOnFocusLoss // Pause when window loses focus
+        draggable // Allow dragging
+        pauseOnHover // Pause on hover
+      />
+
       <div className="navbar">
         <div className="navLeft">
           <h1 className="title">Algo Arena</h1>
