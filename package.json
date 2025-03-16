@@ -2,6 +2,7 @@
   "dependencies": {
     "@socket.io/admin-ui": "^0.5.1",
     "axios": "^1.8.3",
+    "bcrypt": "^5.1.1",
     "io": "^1.5.3",
     "react-toastify": "^11.0.5",
     "socket": "^0.14.57",

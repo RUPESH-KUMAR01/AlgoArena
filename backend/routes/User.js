@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
 const app = express.Router();
 const zod = require('zod');
 const { JWT_SECRET } = require('../config');
@@ -32,11 +33,14 @@ app.post("/signup", async (req, res) => {
     return res.status(400).send("User already exists");
   }
 
-  // Create the user with plain-text password (not recommended)
+  // Hash the password before saving it
+  const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+
+  // Create the user with the hashed password
   const user = await User.create({
     username,
     email,
-    password, // Storing plain-text password (NOT SECURE!)
+    password: hashedPassword, // Store the hashed password
   });
 
   // Generate JWT token
@@ -66,8 +70,9 @@ app.post("/signin", async (req, res) => {
     return res.status(400).send("User not found");
   }
 
-  // Step 3: Check if the password matches
-  if (user.password !== password) {
+  // Step 3: Verify the password using bcrypt
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
     return res.status(400).send("Invalid password");
   }
 
