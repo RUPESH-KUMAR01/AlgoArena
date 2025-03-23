@@ -23,6 +23,16 @@ const setupSocket = (server) => {
             socket.broadcast.emit('update-code', data)
         })
 
+
+        socket.on("send-message", ({roomId, username, message}) => {
+            console.log(`📩 Server received message: ${message} from ${username} in room ${roomId}`);            
+            if(roomId){
+                socket.broadcast.emit("receive-message", {username, message});
+            }
+            else{
+                console.log(`⚠️ send-message event missing roomId from ${username}`);            }
+        });
+
     })
 }
 
