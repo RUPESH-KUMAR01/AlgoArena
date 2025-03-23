@@ -1,7 +1,7 @@
 const express = require("express");
 const FullRoute = require("./routes/index");
 const cors = require("cors");
-const { default: setupSocket } = require("./socket");
+const setupSocket = require("./socket");
 
 const app = express();
 

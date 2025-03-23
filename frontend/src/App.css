@@ -265,3 +265,42 @@
 .language-dropdown:hover {
   background-color: #333;
 }
+
+/* for chat */
+
+.chatContainer {
+  position: fixed;
+  bottom: 80px; /* Adjust based on where you want it */
+  right: 20px;
+  width: 300px; /* Adjust size */
+  height: 400px;
+  background-color: rgba(0, 0, 0, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  display: none; /* Initially hidden */
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.chatContainer.open {
+  display: flex;
+}
+
+.chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #2b262600;
+  color: white;
+  font-size: 18px;
+}
+
+.closeChat {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  margin-left: auto; /* Ensures the button moves to the right */
+}

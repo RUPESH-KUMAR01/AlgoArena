@@ -1,4 +1,4 @@
-import {Server as SocketIOServer} from "socket.io";
+const { Server: SocketIOServer } = require("socket.io");
 
 const setupSocket = (server) => {
     const io = new SocketIOServer(server,{
@@ -13,6 +13,7 @@ const setupSocket = (server) => {
     const userSocketMap = new Map;
 
     io.on('connection', socket => {
+        const roomId= socket.handshake.query.roomId;
         const userId = socket.handshake.query.username; // Access the userId sent as a query parameter
         if (userId) {
             userSocketMap.set(userId, socket.id);
@@ -23,9 +24,18 @@ const setupSocket = (server) => {
             socket.broadcast.emit('update-code', data)
         })
 
+        socket.on("send-message", ({roomId, username, message}) => {
+            console.log(`📩 Server received message: ${message} from ${username} in room ${roomId}`);            
+            if(roomId){
+                socket.to(roomId).emit("receive-message", {username, message});
+            }
+            else{
+                console.log(`⚠️ send-message event missing roomId from ${username}`);            }
+        });
+
     })
 }
 
 
 
-export default setupSocket;
+module.exports = setupSocket;

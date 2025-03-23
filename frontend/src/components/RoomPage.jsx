@@ -18,8 +18,14 @@ const RoomPage = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [runResult, setRunResult] = useState("");
   const [language, setLanguage] = useState("javascript");
+  const [ chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
 
   const socketRef = useRef(null); // Create a reference to hold the socket instance
+  // const socket = io("http://localhost:3000", {
+  //   transports: ["websocket", "polling"],
+  // });
 
   const setInitialCode = async () => {
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/get-code/${roomId}`);
@@ -31,6 +37,10 @@ const RoomPage = () => {
   }, []);
 
   useEffect(() => {
+    if(!username){
+      console.console.warn("⚠️ Username is not available when establishing socket connection.");
+      return;
+    }
     // If socketRef.current is null, create the socket connection
     if (!socketRef.current) {
       socketRef.current = io(`${import.meta.env.VITE_BACKEND_URL}`, {
@@ -44,6 +54,11 @@ const RoomPage = () => {
       if (data.roomId == roomId) {
         setCode(data.code);
       }
+    });
+
+    socketRef.current.on("receive-message", (data) => {
+      console.log("Received message:", data);  
+      setMessages((prev) => [...prev, {username: data.username, text: data.message}]);    
     });
 
     // Cleanup function to disconnect the socket when the component unmounts
@@ -67,6 +82,18 @@ const RoomPage = () => {
   const toggleUserMenu = () => {
     setUserMenuOpen((prev) => !prev);
   };
+  const toggleChat = () => {
+    setChatOpen(prev => !prev);
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+    console.log("🔼 Sending message:", newMessage);
+    socketRef.current.emit("send-message",{roomId, username, message: newMessage});
+    setMessages((prev) => [...prev, { username, text: newMessage }]);
+   setNewMessage("");
+   }
 
   const runCode = () => {
     fetch("https://emkc.org/api/v2/piston/execute", {
@@ -150,6 +177,7 @@ const RoomPage = () => {
           <button onClick={handleLeaveRoom} className="leaveButton">
             Leave Room
           </button>
+          <button onClick={toggleChat} className="chatButton">💬 Chat</button>
           <div className="userMenu">
             <div
               className="userIcon"
@@ -214,6 +242,27 @@ const RoomPage = () => {
           <pre className="output">{runResult}</pre>
         </div>
       </div>
+      {chatOpen && (
+        <div className={`chatContainer ${chatOpen ? 'open' : ''}`}>
+            <div className="chatHeader">
+              <span>Chat</span>
+              <button onClick={toggleChat} className="closeChat">✖</button>
+            </div>
+
+            <div className="chatMessages">
+            {messages.map((msg, index) => (
+              <div key={index} className={`chatMessage ${msg.username === username ? "self" : ""}`}>
+                <strong>{msg.username}: </strong> {msg.text}
+              </div>
+          ))}
+          </div>
+
+          <div className="chatInput">
+            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." />
+            <button onClick={sendMessage} type="button">Send</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
