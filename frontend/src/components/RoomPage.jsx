@@ -9,7 +9,8 @@ import { java } from "@codemirror/lang-java";
 import { io } from "socket.io-client";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import "react-toastify/dist/ReactToastify.css"; 
+
 
 const RoomPage = () => {
   const { roomId } = useParams();
@@ -19,119 +20,63 @@ const RoomPage = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [runResult, setRunResult] = useState("");
   const [language, setLanguage] = useState("javascript");
-  const socketRef = useRef(null);
 
-  // Fetch initial code and current language for the room
-  const fetchRoomDetails = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/${roomId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  const socketRef = useRef(null); // Create a reference to hold the socket instance
 
-      // Extract the currentLanguage field
-      const { currentLanguage, iniCode } = response.data;
-      if (!currentLanguage) {
-        console.error("Frontend: currentLanguage is missing or undefined in the response");
-        setLanguage("javascript"); // Fallback to default language
-      } else {
-        setLanguage(currentLanguage); // Set the language state
-      }
-
-      // Set the initial code
-      setCode(iniCode || "// Start coding here!");
-    } catch (error) {
-      console.error("Frontend: Error fetching room details:", error.response?.data || error.message);
-    }
-  };
-
-  // Join the room and set up Socket.IO listeners
+  const setInitialCode = async () => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/get-code/${roomId}`);
+    setCode(response.data.iniCode);
+  }
   useEffect(() => {
+    toast.success(`Welcome to the room ${roomId}!`);},[roomId]);
+     //toast message(room success)
+  useEffect(() => {
+    toast.info(`Switched to ${language}!`);}, [language]);
+    //toast message(language switch)
+
+  useEffect(() => {
+    setInitialCode();
+  }, []);
+
+  useEffect(() => {
+    // If socketRef.current is null, create the socket connection
     if (!socketRef.current) {
       socketRef.current = io(`${import.meta.env.VITE_BACKEND_URL}`, {
         query: { username },
       });
     }
 
-    // Join the room
-    if (socketRef.current && roomId) {
-      socketRef.current.emit("join-room", { roomId });
-    }
+    // on any change to code the server is going to broadcast this message
 
-    // Listen for code updates
     socketRef.current.on("update-code", (data) => {
-      if (data.roomId === roomId) {
+      if (data.roomId == roomId) {
         setCode(data.code);
       }
     });
 
-    // Listen for language updates
-    socketRef.current.on("update-language", (newLanguage) => {
-      console.log(`Frontend: Received language update from backend: ${newLanguage}`);
-      setLanguage(newLanguage || "javascript"); // Provide a fallback value
-    });
-
+    // Cleanup function to disconnect the socket when the component unmounts
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
     };
-  }, [roomId]);
+  }, [socketRef]); // Empty dependency array to run only once
 
-  // Fetch room details on component mount
-  useEffect(() => {
-    fetchRoomDetails();
-  }, []);
-
-  // Notify when the language changes
-  useEffect(() => {
-    if (language) {
-      toast.info(`Switched to ${language}!`);
-    } else {
-      console.error("Frontend: Language is undefined");
-    }
-  }, [language]);
-
-  // Handle code changes
-  const handleCodeChange = async (value) => {
-    setCode(value); // Update the state with the new value
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/rooms/update-code/${roomId}`,
-        { code: value },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Frontend: Error updating room code:", error.response?.data || error.message);
-    }
-
-    socketRef.current.emit("code-update", {
-      roomId: roomId,
-      code: value,
-    });
+  const handleLogout = () => {
+    localStorage.removeItem("username");
+    navigate("/login");
   };
 
-  // Handle language changes
-  const handleLanguageChange = (e) => {
-    const newLanguage = e.target.value;
-    console.log(`Frontend: Language changed from ${language} to ${newLanguage}`);
-    setLanguage(newLanguage);
-
-    // Emit the language update to the backend
-    socketRef.current.emit("language-update", { roomId, currentLanguage: newLanguage });
+  const handleLeaveRoom = () => {
+    navigate("/create-join");
   };
 
-  // Run the code using Piston API
+  const toggleUserMenu = () => {
+    setUserMenuOpen((prev) => !prev);
+  };
+
   const runCode = () => {
-    console.log(`Frontend: Running code in ${language}`);
     fetch("https://emkc.org/api/v2/piston/execute", {
       method: "POST",
       headers: {
@@ -167,13 +112,6 @@ const RoomPage = () => {
         setRunResult("Error executing code");
       });
   };
-
-  // Clear the output
-  const clearOutput = () => {
-    setRunResult("");
-  };
-
-  // Get the appropriate language extension for CodeMirror
   const getLanguageExtension = (lang) => {
     switch (lang) {
       case "python":
@@ -186,21 +124,23 @@ const RoomPage = () => {
         return javascript();
     }
   };
-
-  // Handle user logout
-  const handleLogout = () => {
-    localStorage.removeItem("username");
-    navigate("/login");
+  const clearOutput = () => {
+    setRunResult(""); // Fix missing clear functionality
   };
-
-  // Handle leaving the room
-  const handleLeaveRoom = () => {
-    navigate("/create-join");
-  };
-
-  // Toggle the user menu dropdown
-  const toggleUserMenu = () => {
-    setUserMenuOpen((prev) => !prev);
+  const handleCodeChange = async (value) => {
+    setCode(value); // Update the state with the new value
+    try {
+      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/update-code/${roomId}`, {
+          code: value,
+      });
+    } catch (error) {
+        console.error("Error updating room code:", error);
+    }
+    //console.log(code)
+    socketRef.current.emit("code-update", {
+      roomId: roomId,
+      code: value,
+    });
   };
 
   return (
@@ -252,7 +192,7 @@ const RoomPage = () => {
       <div className="editorResultWrapper">
         <div className="editorContainer">
           <div className="editor-navbar">
-            <span className="file-name">main.{language === "javascript" ? "js" : language}</span>
+            <span className="file-name">main.js</span>
             <div className="language-selector">
               <label htmlFor="language-select" className="language-label">
                 Select Language:
@@ -260,7 +200,7 @@ const RoomPage = () => {
               <select
                 id="language-select"
                 value={language}
-                onChange={handleLanguageChange}
+                onChange={(e) => setLanguage(e.target.value)}
                 className="language-dropdown"
               >
                 <option value="javascript">JavaScript</option>
@@ -276,7 +216,9 @@ const RoomPage = () => {
           <CodeMirror
             height="80vh"
             value={code}
-            onChange={(value) => handleCodeChange(value)}
+            onChange={(value) => {
+              handleCodeChange(value); // Update state when content changes
+            }}
             extensions={[getLanguageExtension(language)]}
             theme="dark"
           />
