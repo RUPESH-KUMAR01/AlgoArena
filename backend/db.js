@@ -37,6 +37,10 @@ const RoomSchema = mongoose.Schema({
       type: String,
       required: true,
     },
+    currentLangauge: {
+      tye: String,
+      default: 'JavaScript',
+    },
     createdAt: {
         type: Date,
         default: Date.now,
