@@ -3,14 +3,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import "../App.css";
+// import "../css/RoomPage.css";
+
 import { python } from "@codemirror/lang-python";
 import { cpp } from "@codemirror/lang-cpp";
 import { java } from "@codemirror/lang-java";
 import { io } from "socket.io-client";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; 
-
+import "react-toastify/dist/ReactToastify.css";
 
 const RoomPage = () => {
   const { roomId } = useParams();
@@ -18,45 +19,63 @@ const RoomPage = () => {
   const username = localStorage.getItem("username") || "Guest";
   const [code, setCode] = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [activeUsersHover, setActiveUsersHover] = useState(false);
   const [runResult, setRunResult] = useState("");
   const [language, setLanguage] = useState("javascript");
+  const [activeUsers, setActiveUsers] = useState([]);
 
   const socketRef = useRef(null); // Create a reference to hold the socket instance
 
-  const setInitialCode = async () => {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/get-code/${roomId}`);
-    setCode(response.data.iniCode);
-  }
   useEffect(() => {
-    toast.success(`Welcome to the room ${roomId}!`);},[roomId]);
-     //toast message(room success)
-  useEffect(() => {
-    toast.info(`Switched to ${language}!`);}, [language]);
-    //toast message(language switch)
-
-  useEffect(() => {
+    const setInitialCode = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/rooms/get-code/${roomId}`
+        );
+        setCode(response.data.iniCode);
+      } catch (error) {
+        console.error("Error fetching initial code:", error);
+      }
+    };
     setInitialCode();
   }, []);
+  useEffect(() => {
+    toast.success(`Welcome to the room ${roomId}!`);
+  }, [roomId]);
+  //toast message(room success)
+  useEffect(() => {
+    toast.info(`Switched to ${language}!`);
+  }, [language]);
+  //toast message(language switch)
 
   useEffect(() => {
-    // If socketRef.current is null, create the socket connection
     if (!socketRef.current) {
       socketRef.current = io(`${import.meta.env.VITE_BACKEND_URL}`, {
         query: { username },
       });
+
+      socketRef.current.emit("join-room", { roomId, username });
+
+      socketRef.current.on("room-language", (lang) => {
+        setLanguage(lang);
+      });
+
+      socketRef.current.on("active-users", (users) => {
+        console.log("Received active users:", users); // Debugging
+        setActiveUsers(users);
+      });
+
+      socketRef.current.on("update-code", (data) => {
+        if (data.roomId === roomId) {
+          setCode(data.code);
+        }
+      });
     }
-
-    // on any change to code the server is going to broadcast this message
-
-    socketRef.current.on("update-code", (data) => {
-      if (data.roomId == roomId) {
-        setCode(data.code);
-      }
-    });
 
     // Cleanup function to disconnect the socket when the component unmounts
     return () => {
       if (socketRef.current) {
+        socketRef.current.emit("leave-room", { roomId, username });
         socketRef.current.disconnect();
         socketRef.current = null;
       }
@@ -74,6 +93,10 @@ const RoomPage = () => {
 
   const toggleUserMenu = () => {
     setUserMenuOpen((prev) => !prev);
+  };
+
+  const toggleActiveUsersMenu = () => {
+    setActiveUsersHover((prev) => !prev);
   };
 
   const runCode = () => {
@@ -130,13 +153,15 @@ const RoomPage = () => {
   const handleCodeChange = async (value) => {
     setCode(value); // Update the state with the new value
     try {
-      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/update-code/${roomId}`, {
+      const response = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/rooms/update-code/${roomId}`,
+        {
           code: value,
-      });
+        }
+      );
     } catch (error) {
-        console.error("Error updating room code:", error);
+      console.error("Error updating room code:", error);
     }
-    //console.log(code)
     socketRef.current.emit("code-update", {
       roomId: roomId,
       code: value,
@@ -149,7 +174,7 @@ const RoomPage = () => {
         position="top-center"
         autoClose={3000}
         hideProgressBar={false}
-        newestOnTop={false}
+        newestOnTop={true}
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
@@ -163,6 +188,29 @@ const RoomPage = () => {
         <div className="navCenter">
           <ul className="navLinks">
             <li className="navLink">Room: {roomId}</li>
+            <li className="navLink">
+              <div
+                className="activeUsersButton"
+                onMouseEnter={() => setActiveUsersHover(true)}
+                onMouseLeave={() => setActiveUsersHover(false)}
+              >
+                <span>👥 Active Users</span>
+                {activeUsersHover && (
+                  <div className="activeUsersDropdown">
+                    <h3>Active Users in Room</h3>
+                    {activeUsers.length === 0 ? (
+                      <p>No users online</p>
+                    ) : (
+                      <ul>
+                        {activeUsers.map((user, index) => (
+                          <li key={index}>{user}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </li>
           </ul>
         </div>
         <div className="navRight">
@@ -200,7 +248,14 @@ const RoomPage = () => {
               <select
                 id="language-select"
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  setLanguage(newLang);
+                  socketRef.current.emit("set-language", {
+                    roomId,
+                    language: newLang,
+                  });
+                }}
                 className="language-dropdown"
               >
                 <option value="javascript">JavaScript</option>

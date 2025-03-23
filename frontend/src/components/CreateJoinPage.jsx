@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createRoom, joinRoom } from "../api/roomService";
 import "../App.css";
-import { ToastContainer, toast } from "react-toastify"; 
-import "react-toastify/dist/ReactToastify.css"; 
-
+// import "../css/CreateJoinPage.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const CreateJoinPage = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const CreateJoinPage = () => {
       localStorage.setItem("previousRooms", JSON.stringify(updatedRooms));
       setPreviousRooms(updatedRooms);
       navigate(`/room/${roomId}`);
-      toast.success("New room created successfully!");  //toast message(room success)
+      toast.success("New room created successfully!");
     } catch (error) {
       console.error("Error creating room:", error);
       toast.error("Failed to create room. Please try again.");
@@ -49,22 +49,22 @@ const CreateJoinPage = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("username");
-    localStorage.removeItem("token")
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
   return (
     <div className="container">
-    <ToastContainer
-      position="top-center"
-      autoClose={3000}
-      hideProgressBar={false}
-      newestOnTop={true}
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
       />
       <div className="navbar">
         <div className="navLeft">
