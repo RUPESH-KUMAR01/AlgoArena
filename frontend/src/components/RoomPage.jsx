@@ -57,7 +57,9 @@ const RoomPage = () => {
     });
 
     socketRef.current.on("receive-message", (data) => {
-      setMessages((prev) => [...prev, {username: data.username, text: data.message}]);    
+      if(data.roomId === roomId){
+        setMessages((prev) => [...prev, {username: data.username, text: data.message}]); 
+      }
     });
 
     // Cleanup function to disconnect the socket when the component unmounts
