@@ -4,7 +4,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import "../App.css";
 import { python } from "@codemirror/lang-python";
-import { cpp } from "@codemirror/lang-cpp";
+import { cpp, cppLanguage } from "@codemirror/lang-cpp";
 import { java } from "@codemirror/lang-java";
 import { io } from "socket.io-client";
 import axios from "axios";
@@ -24,11 +24,23 @@ const RoomPage = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const socketRef = useRef(null); // Create a reference to hold the socket instance
+  const [activeUsersHover, setActiveUsersHover] = useState(false);
+  const [activeUsers, setActiveUsers] = useState([]);
 
-  const setInitialCode = async () => {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/rooms/get-code/${roomId}`);
-    setCode(response.data.iniCode);
-  }
+  useEffect(() => {
+    const setInitialCode = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/rooms/get-code/${roomId}`
+        );
+        setCode(response.data.iniCode);
+      } catch (error) {
+        console.error("Error fetching initial code:", error);
+      }
+    };
+    setInitialCode();
+  }, []);
+
   useEffect(() => {
     toast.success(`Welcome to the room ${roomId}!`);},[roomId]);
      //toast message(room success)
@@ -36,9 +48,6 @@ const RoomPage = () => {
     toast.info(`Switched to ${language}!`);}, [language]);
     //toast message(language switch)
 
-  useEffect(() => {
-    setInitialCode();
-  }, []);
 
   useEffect(() => {
     // If socketRef.current is null, create the socket connection
@@ -56,6 +65,19 @@ const RoomPage = () => {
       }
     });
 
+    socketRef.current.emit("join-room", { roomId, username });
+
+    socketRef.current.on("room-language", (data) => {
+      if(data.id === roomId){
+        setLanguage(data.lang);
+      }
+    });
+
+    socketRef.current.on("active-users", (users) => {
+      console.log("Received active users:", users); // Debugging
+      setActiveUsers(users);
+    });
+
     socketRef.current.on("receive-message", (data) => {
       if(data.roomId === roomId){
         setMessages((prev) => [...prev, {username: data.username, text: data.message}]); 
@@ -65,6 +87,7 @@ const RoomPage = () => {
     // Cleanup function to disconnect the socket when the component unmounts
     return () => {
       if (socketRef.current) {
+        socketRef.current.emit("leave-room", { roomId, username });
         socketRef.current.disconnect();
         socketRef.current = null;
       }
@@ -86,6 +109,10 @@ const RoomPage = () => {
 
   const toggleChat = () => {
     setChatOpen(prev => !prev);
+  };
+
+  const toggleActiveUsersMenu = () => {
+    setActiveUsersHover((prev) => !prev);
   };
 
   const sendMessage = (e) => {
@@ -169,7 +196,7 @@ const RoomPage = () => {
         position="top-center"
         autoClose={3000}
         hideProgressBar={false}
-        newestOnTop={false}
+        newestOnTop={true}
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
@@ -183,16 +210,41 @@ const RoomPage = () => {
         <div className="navCenter">
           <ul className="navLinks">
             <li className="navLink">Room: {roomId}</li>
+            <li className="navLink">
+              <div
+                className="activeUsersButton"
+                onMouseEnter={() => setActiveUsersHover(true)}
+                onMouseLeave={() => setActiveUsersHover(false)}
+              >
+                <span className="w-[120px]">👥  Active Users</span>
+                {activeUsersHover && (
+                  <div className="activeUsersDropdown">
+                    <h3>Active Users in Room</h3>
+                    {activeUsers.length === 0 ? (
+                      <p>No users online</p>
+                    ) : (
+                      <ul>
+                        {activeUsers.map((user, index) => (
+                          <li key={index}>{user}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </li>
           </ul>
         </div>
         <div className="navRight">
           <button onClick={handleLeaveRoom} className="leaveButton">
             Leave Room
           </button>
-          <button onClick={toggleChat} className="chatButton">💬 Chat</button>
+          <button onClick={toggleChat} className="chatButton">
+            💬 Chat
+          </button>
           <div className="userMenu">
             <div
-              className="userIcon"
+              className="userIcon w-[150px]"
               onClick={toggleUserMenu}
               title="User Options"
             >
@@ -221,7 +273,14 @@ const RoomPage = () => {
               <select
                 id="language-select"
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  setLanguage(newLang);
+                  socketRef.current.emit("set-language", {
+                    roomId,
+                    language: e.target.value,
+                  });
+                }}
                 className="language-dropdown"
               >
                 <option value="javascript">JavaScript</option>
@@ -278,5 +337,6 @@ const RoomPage = () => {
     </div>
   );
 };
+
 
 export default RoomPage;
