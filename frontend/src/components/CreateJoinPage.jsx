@@ -79,7 +79,7 @@ const CreateJoinPage = () => {
         </div>
         <div className="navRight">
           <div className="userMenu">
-            <div className="userIcon" title="User Options">
+          <div className="userIcon" title="User Options" onClick={() => navigate("/profile")} style={{ cursor: "pointer" }}>
               👤 {username}
             </div>
             <button onClick={handleLogout} className="logoutButton">
