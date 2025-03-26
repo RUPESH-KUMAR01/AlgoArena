@@ -174,6 +174,11 @@ const RoomPage = () => {
   const clearOutput = () => {
     setRunResult(""); // Fix missing clear functionality
   };
+
+  const handleProfileClick = () => {
+    navigate("/profile") // Navigate to Profile Page
+  }
+
   const handleCodeChange = async (value) => {
     setCode(value); // Update the state with the new value
     try {
@@ -252,7 +257,9 @@ const RoomPage = () => {
             </div>
             {userMenuOpen && (
               <div className="dropdownMenu">
-                <div className="dropdownItem">Profile</div>
+                <div className="dropdownItem" onClick={handleProfileClick}>
+                  Profile
+                </div>
                 <div className="dropdownItem" onClick={handleLogout}>
                   Logout
                 </div>

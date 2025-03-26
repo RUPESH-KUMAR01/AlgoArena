@@ -42,6 +42,143 @@ body, html {
 .mainContent, .editorContainer, .resultContainer {
   max-width: 100%;
 }
+
+/* ProfilePage.css */
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--dark-bg);
+  color: var(--text-bright);
+  font-family: 'Arial', sans-serif;
+  padding: 20px;
+  background-image: linear-gradient(135deg, var(--dark-bg) 0%, var(--medium-bg) 100%);
+}
+
+.profile-card {
+  background-color: var(--medium-bg);
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.profile-title {
+  font-size: 2.2rem;
+  margin-bottom: 25px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: var(--primary);
+  position: relative;
+}
+
+.profile-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+}
+
+.profile-info-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.profile-info {
+  font-size: 1.1rem;
+  color: var(--text-bright);
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-input {
+  width: 60%;
+  padding: 8px 12px;
+  font-size: 1rem;
+  background-color: var(--light-bg);
+  color: var(--text-bright);
+  border: 1px solid var(--light-bg);
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.profile-input:focus {
+  border-color: var(--primary);
+}
+
+.profile-button {
+  padding: 10px 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--primary);
+  color: var(--text-bright);
+  width: 100%;
+  transition: all 0.3s ease-in-out;
+}
+
+.profile-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.profile-logout-button {
+  padding: 10px 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--secondary);
+  color: var(--text-bright);
+  width: 100%;
+  transition: all 0.3s ease-in-out;
+}
+
+.profile-logout-button:hover {
+  background-color: #e64a19;
+  transform: translateY(-2px);
+}
+
+.profile-loading {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .profile-card {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .profile-title {
+    font-size: 1.8rem;
+  }
+
+  .profile-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-input {
+    width: 100%;
+    margin-top: 5px;
+  }
+}
 /* ====================== CreateJoinPage.css ====================== */
 /* Fix for the white gap on the right */
 body, html {
